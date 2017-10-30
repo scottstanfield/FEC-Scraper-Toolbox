@@ -117,7 +117,7 @@ def consume_rss():
     #   '<link>http://query.nictusa.com/dcdev/posted/([0-9]*)\.fec</link>')
     regex = re.compile('<link>http://docquery.fec.gov/dcdev/posted/([0-9]*)\.fec</link>')
     url = urllib.request.urlopen(RSSURL)
-    rss = url.read()
+    rss = url.read().decode()
     matches = []
     for match in re.findall(regex, rss):
         matches.append(match)
