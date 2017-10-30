@@ -24,8 +24,8 @@ from datetime import datetime, timedelta
 import glob
 import multiprocessing
 import os
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import zipfile
 
 # Try to import user settings or set them explicitly
@@ -101,16 +101,16 @@ def download_file(src, dest):
     y = 0
     try:
         # Add a header to the request.
-        request = urllib2.Request(url, headers={
+        request = urllib.request.Request(url, headers={
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'})
-        srclen = float(urllib2.urlopen(request).info().get('Content-Length'))
+        srclen = float(urllib.request.urlopen(request).info().get('Content-Length'))
     except:
         y = 5
     while y < 5:
         try:
             # Add a header
-            urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
-            urllib.urlretrieve(url, filename)
+            urllib.request.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
+            urllib.request.urlretrieve(url, filename)
             destlen = os.path.getsize(dest)
 
             # Repeat download up to five times if files not same size
@@ -123,7 +123,7 @@ def download_file(src, dest):
         except:
             y += 1
     if y == 5:
-        print(src + ' could not be downloaded.')
+        print((src + ' could not be downloaded.'))
 
 
 def unzip_master_file(masterfile):
@@ -144,7 +144,7 @@ def unzip_master_file(masterfile):
                 os.rename(savefile, savefile.replace('.txt', fileyear + '.txt'))
 
     except:
-        print('Files contained in ' + masterfile + ' could not be extracted.')
+        print(('Files contained in ' + masterfile + ' could not be extracted.'))
 
 
 if __name__ == '__main__':

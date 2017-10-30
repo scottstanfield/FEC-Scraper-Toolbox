@@ -1493,7 +1493,7 @@ def parse_full_name(data, delimiter):
 
 def populate_data_row_dict(data, headers, output):
     for x in range(len(headers)):
-        if headers[x] in output.keys() and x < len(
+        if headers[x] in list(output.keys()) and x < len(
                 data):  # 100235 (F3X, v5.0) missing last 12 cols after treas sign date
             output[headers[x]] = data[x].strip().replace('\t', ' ').strip(' "\n')
     return output
@@ -5585,7 +5585,7 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
 
         # Iterate through file header row and populate header dictionary
         for x in range(len(rowhdrs)):
-            if rowhdrs[x] in filehdrdata.keys() and x < len(
+            if rowhdrs[x] in list(filehdrdata.keys()) and x < len(
                     filehdr):  # Checking len because sometimes header comment omitted
                 filehdrdata[rowhdrs[x]] = filehdr[x].strip().replace(OUTPUTDELIMITER, ' ').strip(' "\n')
 
@@ -5606,13 +5606,13 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
 
     # Iterate through report header row and populate report header dictionary
     for x in range(len(rowhdrs)):
-        if rowhdrs[x] in rpthdrdata.keys() and x < len(
+        if rowhdrs[x] in list(rpthdrdata.keys()) and x < len(
                 rpthdr):  # 100235 (F3X, v5.0) missing last 12 cols after treas sign date
             rpthdrdata[rowhdrs[x]] = rpthdr[x].strip().replace(OUTPUTDELIMITER, ' ').strip(' "\n')
 
     # Attempt to determine name delimiter if missing
     if filehdrdata['NmDelim'] == '':
-        if 'TrsFullName' in rpthdrdata.keys():
+        if 'TrsFullName' in list(rpthdrdata.keys()):
             if rpthdrdata['TrsFullName'].find('^') != -1:
                 filehdrdata['NmDelim'] = '^'
             elif rpthdrdata['TrsFullName'].find(',') != -1:
@@ -5728,7 +5728,7 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
             elif data[0].startswith('F1S'):
                 formtype = 'F1S'
             else:
-                for key in outputhdrs.keys():
+                for key in list(outputhdrs.keys()):
                     if data[0].startswith(key):
                         formtype = key
                         continue

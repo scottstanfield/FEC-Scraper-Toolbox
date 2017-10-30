@@ -10,8 +10,8 @@ import multiprocessing
 import os
 import pickle
 import re
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import zipfile
 
 # Try to import user settings or set them explicitly
@@ -116,7 +116,7 @@ def consume_rss():
     # regex = re.compile(
     #   '<link>http://query.nictusa.com/dcdev/posted/([0-9]*)\.fec</link>')
     regex = re.compile('<link>http://docquery.fec.gov/dcdev/posted/([0-9]*)\.fec</link>')
-    url = urllib.urlopen(RSSURL)
+    url = urllib.request.urlopen(RSSURL)
     rss = url.read()
     matches = []
     for match in re.findall(regex, rss):
@@ -138,16 +138,16 @@ def download_archive(archive):
     y = 0
     # Add a header to the request
     try:
-        request = urllib2.Request(src, headers={
+        request = urllib.request.Request(src, headers={
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'})
-        srclen = float(urllib2.urlopen(request).info().get('Content-Length'))
+        srclen = float(urllib.request.urlopen(request).info().get('Content-Length'))
     except:
         y = 5
     while y < 5:
         try:
             # I have added a header
-            urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
-            urllib.urlretrieve(src, dest)
+            urllib.request.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
+            urllib.request.urlretrieve(src, dest)
 
             destlen = os.path.getsize(dest)
 
@@ -161,7 +161,7 @@ def download_archive(archive):
         except:
             y += 1
     if y == 5:
-        print(src + ' could not be downloaded.')
+        print((src + ' could not be downloaded.'))
 
 
 def download_report(download):
@@ -178,9 +178,9 @@ def download_report(download):
 
     # Add a header to the request.
     try:
-        request = urllib2.Request(url, headers={
+        request = urllib.request.Request(url, headers={
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'})
-        srclen = float(urllib2.urlopen(request).info().get('Content-Length'))
+        srclen = float(urllib.request.urlopen(request).info().get('Content-Length'))
     except:
         y = 5
     filename = RPTSVDIR + download + '.fec'
@@ -188,8 +188,8 @@ def download_report(download):
     while y < 5:
         try:
             # Add a header
-            urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
-            urllib.urlretrieve(url, filename)
+            urllib.request.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
+            urllib.request.urlretrieve(url, filename)
             destlen = os.path.getsize(filename)
 
             # Repeat download up to five times if files not same size
@@ -203,7 +203,7 @@ def download_report(download):
         except:
             y += 1
     if y == 5:
-        print('Report ' + download + ' could not be downloaded.')
+        print(('Report ' + download + ' could not be downloaded.'))
 
 
 def pickle_archives(archives, oldarchives):
@@ -261,9 +261,9 @@ def unzip_archive(archive, overwrite=0):
         os.rename(ARCSVDIR + archive, ARCPROCDIR + archive)
 
     except:
-        print('Files contained in ' + archive + ' could not be '
+        print(('Files contained in ' + archive + ' could not be '
                                                 'extracted. The file has been deleted so it can be '
-                                                'downloaded again later.\n')
+                                                'downloaded again later.\n'))
         os.remove(ARCSVDIR + archive)
 
 
@@ -288,11 +288,11 @@ def verify_reports(rpts, downloaded):
         else:
             # Add a header to the request.
             try:
-                request = urllib2.Request(RPTURL + rpt + '.fec', headers={
+                request = urllib.request.Request(RPTURL + rpt + '.fec', headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'})
-                srclen = float(urllib2.urlopen(request).info().get('Content-Length'))
-            except urllib2.HTTPError:
-                print(RPTURL + rpt + '.fec could not be downloaded.')
+                srclen = float(urllib.request.urlopen(request).info().get('Content-Length'))
+            except urllib.error.HTTPError:
+                print((RPTURL + rpt + '.fec could not be downloaded.'))
                 continue
 
             for child in childdirs:
@@ -341,8 +341,8 @@ if __name__ == '__main__':
     # If any files returned, download them using multiprocessing
     else:
         print('Done!\n')
-        print('Downloading ' + str(len(archives))
-              + ' new archive(s)...')
+        print(('Downloading ' + str(len(archives))
+              + ' new archive(s)...'))
         pool = multiprocessing.Pool(processes=NUMPROC)
         for archive in archives:
             pool.apply_async(download_archive(archive))
@@ -380,15 +380,15 @@ if __name__ == '__main__':
     # seven days
     print('Consuming FEC RSS feed to find new reports...')
     rpts = consume_rss()
-    print('Done! ' + str(len(rpts)) + ' reports found.\n')
+    print(('Done! ' + str(len(rpts)) + ' reports found.\n'))
 
     # See whether each file flagged for download already has been
     # downloaded.  If it has, verify the downloaded file is the correct
     # length.
     print('Compiling list of reports to download...')
     newrpts = verify_reports(rpts, downloaded)
-    print('Done! ' + str(len(newrpts)) + ' reports flagged for '
-                                         'download.\n')
+    print(('Done! ' + str(len(newrpts)) + ' reports flagged for '
+                                         'download.\n'))
 
     # Download each of these reports
     print('Downloading new reports...')
