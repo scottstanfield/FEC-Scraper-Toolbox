@@ -13,6 +13,7 @@ import re
 import urllib.request, urllib.parse, urllib.error
 import urllib.request, urllib.error, urllib.parse
 import zipfile
+from scrappa import *
 
 # Try to import user settings or set them explicitly
 try:
@@ -164,7 +165,8 @@ def download_archive(archive):
         print((src + ' could not be downloaded.'))
 
 
-def download_report(download):
+@crawler
+def download_report(download, cr):
     """
     Downloads a single electronic report and saves it in the directory
     specified by the RPTSVDIR variable.  After downloading a report,
@@ -174,36 +176,10 @@ def download_report(download):
     """
     # Construct file url and get length of file
     url = RPTURL + download + '.fec'
-    y = 0
-
-    # Add a header to the request.
-    try:
-        request = urllib.request.Request(url, headers={
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'})
-        srclen = float(urllib.request.urlopen(request).info().get('Content-Length'))
-    except:
-        y = 5
     filename = RPTSVDIR + download + '.fec'
-
-    while y < 5:
-        try:
-            # Add a header
-            urllib.request.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
-            urllib.request.urlretrieve(url, filename)
-            destlen = os.path.getsize(filename)
-
-            # Repeat download up to five times if files not same size
-            if srclen != destlen:
-                os.remove(filename)
-                y += 1
-                continue
-            else:
-                # I wonder if line below be: y = 5
-                y = 6
-        except:
-            y += 1
-    if y == 5:
-        print(('Report ' + download + ' could not be downloaded.'))
+    with cr.download_manager(url) as path:
+        os.rename(path, filename)
+        print(filename)
 
 
 def pickle_archives(archives, oldarchives):
