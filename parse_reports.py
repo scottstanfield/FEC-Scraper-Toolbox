@@ -1,4 +1,4 @@
-# Parse campaign finance reports
+ # Parse campaign finance reports
 # By Christopher Schnaars, USA TODAY
 # Developed with Python 2.7.4
 # See README.md for complete documentation
@@ -9,7 +9,6 @@ import datetime
 import glob
 import linecache
 import os
-import pyodbc
 import shutil
 import time
 
@@ -1177,7 +1176,7 @@ outputhdrs = {
 
 
 def add_entry_to_error_log(logfile, logtext):
-    with open(logfile, 'a+b') as output:
+    with open(logfile, 'a') as output:
         output.write(logtext.strip() + '\n')
 
 
@@ -1310,7 +1309,7 @@ def convert_to_date(val, dateformat, image, fieldname, formtype, rownbr, sched, 
                 else:
                     add_entry_to_error_log(errfile, str(image) + '\t' + sched + '\t' + trans + '\t' + str(
                         rownbr) + '\t' + formtype + '\t' + fieldname + '\t' + val + '\t' + dateformat)
-                    with open(errfile, 'a+b') as output:
+                    with open(errfile, 'a') as output:
                         output.write(errtxt + '\n')
                     return ''
             datestring = month + '/' + day + '/' + year
@@ -1361,65 +1360,7 @@ def get_row_headers(header, version):
 
 
 def load_rpt_hdrs(rpttype, imageid, rowdata, filehdr, outputhdrs, DBCONNSTR):
-    errfile = RPTERRDIR + 'ErrorMessages.log'
-    # Create stored procedure call to load header data into database
-    sql = 'EXEC dbo.usp_AddRptHdr_' + rpttype + ' ' + str(imageid) + ', '
-
-    # Add report header data values
-    # Ignore full names
-    for hdr in outputhdrs:
-        if hdr == 'TrsFullName' or hdr == 'SignFullName' or hdr == 'AgtFullName' or hdr == 'CustFullName' or hdr == 'CandFullName':
-            continue
-        data = rowdata[hdr]
-        if data == None or data == '':
-            data = 'NULL'
-        elif data == 'nullstring':
-            data = "''"
-        sql += data + ', '
-
-    # Add file header data values
-    sql += str(filehdr['Ver']) + ', '
-    sql += clean_sql_text(filehdr['SftNm'], '', "'") + ', '
-    sql += clean_sql_text(filehdr['SftVer'], '', "'") + ', '
-    sql += clean_sql_text(filehdr['RptID'], '', "'") + ', '
-    sql += clean_sql_text(filehdr['RptNbr'], '', "'") + ', '
-    sql += clean_sql_text(filehdr['HdrCmnt'], '', "'")
-
-    # Replace empty strings with NULL
-    while sql.find(', ,') != -1:
-        sql = sql.replace(', ,', ', NULL,')
-    if sql.endswith(', '):
-        sql += 'NULL'
-
-    # Create SQL Server connection
-    conn = pyodbc.connect(DBCONNSTR)
-    cursor = conn.cursor()
-
-    # Excecute stored procedure
-    cursor.execute(sql)
-    sqlresult = cursor.fetchone()[0]
-    conn.commit()
-    conn.close()
-
-    # Display error messages
-    if sqlresult == -1:
-        add_entry_to_error_log(errfile, str(imageid) + '.fec already ' \
-                                                       'exists in the FEC database. Data ' \
-                                                       'from this file will not be imported, ' \
-                                                       'and the file has been moved to the ' \
-                                                       'Review directory.')
-    elif sqlresult == -2:
-        add_entry_to_error_log(errfile, 'The stored procedure ' \
-                                        'returned an error when this Python ' \
-                                        'script attempted to load the header ' \
-                                        'for ' + str(imageid) + '. The data ' \
-                                                                'was not loaded into the database, ' \
-                                                                'and the file has been moved to the ' \
-                                                                'Review directory. The stored ' \
-                                                                'procedure call which failed was: ' + sql
-                               )
-    return sqlresult
-
+    return 0
 
 def parse_data_row(data, delim):
     # There are many cases where a field begins with " but is cut off or
@@ -1427,7 +1368,7 @@ def parse_data_row(data, delim):
     # be joined together and the parsing to fail. For that reason, I'm
     # using csv module only for comma delimiters.
     if delim == ',':
-        for x in csv.reader([data], SRCDELIMITER=',', quotechar='"'):
+        for x in csv.reader([data], delimiter=',', quotechar='"'):
             data = x
     else:
         data = data.split(delim)
@@ -1493,7 +1434,7 @@ def parse_full_name(data, delimiter):
 
 def populate_data_row_dict(data, headers, output):
     for x in range(len(headers)):
-        if headers[x] in output.keys() and x < len(
+        if headers[x] in list(output.keys()) and x < len(
                 data):  # 100235 (F3X, v5.0) missing last 12 cols after treas sign date
             output[headers[x]] = data[x].strip().replace('\t', ' ').strip(' "\n')
     return output
@@ -5388,75 +5329,75 @@ textfile = RPTOUTDIR + 'Text_' + filestamp + '.txt'
 f1sfile = RPTOUTDIR + 'F1S_' + filestamp + '.txt'
 
 # Write headers to data output files
-with open(schedafile, 'wb') as outputfile:
+with open(schedafile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SA'])) + '\r')
 
-with open(schedbfile, 'wb') as outputfile:
+with open(schedbfile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SB'])) + '\r')
 
-with open(schedcfile, 'wb') as outputfile:
+with open(schedcfile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SC'])) + '\r')
 
-with open(schedc1file, 'wb') as outputfile:
+with open(schedc1file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SC1'])) + '\r')
 
-with open(schedc2file, 'wb') as outputfile:
+with open(schedc2file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SC2'])) + '\r')
 
-with open(scheddfile, 'wb') as outputfile:
+with open(scheddfile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SD'])) + '\r')
 
-with open(schedefile, 'wb') as outputfile:
+with open(schedefile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SE'])) + '\r')
 
-with open(schedffile, 'wb') as outputfile:
+with open(schedffile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SF'])) + '\r')
 
-with open(schedh1file, 'wb') as outputfile:
+with open(schedh1file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['H1'])) + '\r')
 
-with open(schedh2file, 'wb') as outputfile:
+with open(schedh2file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['H2'])) + '\r')
 
-with open(schedh3file, 'wb') as outputfile:
+with open(schedh3file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['H3'])) + '\r')
 
-with open(schedh4file, 'wb') as outputfile:
+with open(schedh4file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['H4'])) + '\r')
 
-with open(schedh5file, 'wb') as outputfile:
+with open(schedh5file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['H5'])) + '\r')
 
-with open(schedh6file, 'wb') as outputfile:
+with open(schedh6file, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['H6'])) + '\r')
 
-with open(schedifile, 'wb') as outputfile:
+with open(schedifile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SI'])) + '\r')
 
-with open(schedlfile, 'wb') as outputfile:
+with open(schedlfile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['SL'])) + '\r')
 
-with open(textfile, 'wb') as outputfile:
+with open(textfile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
         map(str, outputhdrs['TEXT'])) + '\r')
 
-with open(f1sfile, 'wb') as outputfile:
+with open(f1sfile, 'w') as outputfile:
     outputfile.write('ImageID' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(map(str, outputhdrs['F1S'])) + '\r')
 
 # Append full name fields to output headers
@@ -5585,7 +5526,7 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
 
         # Iterate through file header row and populate header dictionary
         for x in range(len(rowhdrs)):
-            if rowhdrs[x] in filehdrdata.keys() and x < len(
+            if rowhdrs[x] in list(filehdrdata.keys()) and x < len(
                     filehdr):  # Checking len because sometimes header comment omitted
                 filehdrdata[rowhdrs[x]] = filehdr[x].strip().replace(OUTPUTDELIMITER, ' ').strip(' "\n')
 
@@ -5606,13 +5547,13 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
 
     # Iterate through report header row and populate report header dictionary
     for x in range(len(rowhdrs)):
-        if rowhdrs[x] in rpthdrdata.keys() and x < len(
+        if rowhdrs[x] in list(rpthdrdata.keys()) and x < len(
                 rpthdr):  # 100235 (F3X, v5.0) missing last 12 cols after treas sign date
             rpthdrdata[rowhdrs[x]] = rpthdr[x].strip().replace(OUTPUTDELIMITER, ' ').strip(' "\n')
 
     # Attempt to determine name delimiter if missing
     if filehdrdata['NmDelim'] == '':
-        if 'TrsFullName' in rpthdrdata.keys():
+        if 'TrsFullName' in list(rpthdrdata.keys()):
             if rpthdrdata['TrsFullName'].find('^') != -1:
                 filehdrdata['NmDelim'] = '^'
             elif rpthdrdata['TrsFullName'].find(',') != -1:
@@ -5649,7 +5590,7 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
     # Because some headers are multiple lines, create a flag to look for
     # the report header and ignore all rows before finding a line that
     # begins with the report type.
-    with open(fecfile, 'rb') as datafile:
+    with open(fecfile, 'r', encoding='ascii') as datafile:
         # Create header flag and lists to house output data
         hdrflg = 0
         otherdata = []
@@ -5728,7 +5669,7 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
             elif data[0].startswith('F1S'):
                 formtype = 'F1S'
             else:
-                for key in outputhdrs.keys():
+                for key in list(outputhdrs.keys()):
                     if data[0].startswith(key):
                         formtype = key
                         continue
@@ -5922,97 +5863,97 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
 
         # Write data to files
         if len(otherdata) > 0:
-            with open(otherdatafile, 'a+b') as outputfile:
+            with open(otherdatafile, 'a') as outputfile:
                 for row in otherdata:
                     outputfile.write(row)
 
         if len(scheda) > 0:
-            with open(schedafile, 'a+b') as outputfile:
+            with open(schedafile, 'a') as outputfile:
                 for row in scheda:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedb) > 0:
-            with open(schedbfile, 'a+b') as outputfile:
+            with open(schedbfile, 'a') as outputfile:
                 for row in schedb:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedc) > 0:
-            with open(schedcfile, 'a+b') as outputfile:
+            with open(schedcfile, 'a') as outputfile:
                 for row in schedc:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedc1) > 0:
-            with open(schedc1file, 'a+b') as outputfile:
+            with open(schedc1file, 'a') as outputfile:
                 for row in schedc1:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedc2) > 0:
-            with open(schedc2file, 'a+b') as outputfile:
+            with open(schedc2file, 'a') as outputfile:
                 for row in schedc2:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedd) > 0:
-            with open(scheddfile, 'a+b') as outputfile:
+            with open(scheddfile, 'a') as outputfile:
                 for row in schedd:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schede) > 0:
-            with open(schedefile, 'a+b') as outputfile:
+            with open(schedefile, 'a') as outputfile:
                 for row in schede:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedf) > 0:
-            with open(schedffile, 'a+b') as outputfile:
+            with open(schedffile, 'a') as outputfile:
                 for row in schedf:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedh1) > 0:
-            with open(schedh1file, 'a+b') as outputfile:
+            with open(schedh1file, 'a') as outputfile:
                 for row in schedh1:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedh2) > 0:
-            with open(schedh2file, 'a+b') as outputfile:
+            with open(schedh2file, 'a') as outputfile:
                 for row in schedh2:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedh3) > 0:
-            with open(schedh3file, 'a+b') as outputfile:
+            with open(schedh3file, 'a') as outputfile:
                 for row in schedh3:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedh4) > 0:
-            with open(schedh4file, 'a+b') as outputfile:
+            with open(schedh4file, 'a') as outputfile:
                 for row in schedh4:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedh5) > 0:
-            with open(schedh5file, 'a+b') as outputfile:
+            with open(schedh5file, 'a') as outputfile:
                 for row in schedh5:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedh6) > 0:
-            with open(schedh6file, 'a+b') as outputfile:
+            with open(schedh6file, 'a') as outputfile:
                 for row in schedh6:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedi) > 0:
-            with open(schedifile, 'a+b') as outputfile:
+            with open(schedifile, 'a') as outputfile:
                 for row in schedi:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(schedl) > 0:
-            with open(schedlfile, 'a+b') as outputfile:
+            with open(schedlfile, 'a') as outputfile:
                 for row in schedl:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(text) > 0:
-            with open(textfile, 'a+b') as outputfile:
+            with open(textfile, 'a') as outputfile:
                 for row in text:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
         if len(f1s) > 0:
-            with open(f1sfile, 'a+b') as outputfile:
+            with open(f1sfile, 'a') as outputfile:
                 for row in f1s:
                     outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
 
