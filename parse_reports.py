@@ -1,4 +1,5 @@
- # Parse campaign finance reports
+
+# Parse campaign finance reports
 # By Christopher Schnaars, USA TODAY
 # Developed with Python 2.7.4
 # See README.md for complete documentation
@@ -5453,7 +5454,10 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
             x += 1
 
     # Extract report header
-    rpthdr = linecache.getline(fecfile, x)
+    try:
+        rpthdr = linecache.getline(fecfile, x)
+    except:
+        print('unable to getline on %s', fecfile)
 
     # Clear linecache
     linecache.clearcache()
@@ -5469,6 +5473,7 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
     # If report type not supported, move file to Hold directory
     # and proceed to next file; otherwise retrieve header version
     if rpttype not in rpttypes:
+        print('skip: %s %s\n' % (fecfile, rpttype))
         os.rename(fecfile, fecfile.replace(RPTSVDIR, RPTHOLDDIR))
         continue
     else:
