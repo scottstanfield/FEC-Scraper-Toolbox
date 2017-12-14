@@ -1,7 +1,7 @@
 ARCPROCDIR = ''  # Directory to house archives that have been processed
 ARCSVDIR = ''  # Directory to house archives that have been downloaded but not processed
 
-DBCONNSTR = ''
+# DBCONNSTR is moved to dsn.py
 
 MASTERDIR = ''  # Master directory for weekly candidate and committee master files
 
