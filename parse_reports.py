@@ -272,7 +272,64 @@ def get_row_headers(header, version):
 
 
 def load_rpt_hdrs(rpttype, imageid, rowdata, filehdr, outputhdrs, DBCONNSTR):
-    return 0
+    errfile = RPTERRDIR + 'ErrorMessages.log'
+    # Create stored procedure call to load header data into database
+    sql = 'EXEC dbo.usp_AddRptHdr_' + rpttype + ' ' + str(imageid) + ', '
+
+    # Add report header data values
+    # Ignore full names
+    for hdr in outputhdrs:
+        if hdr == 'TrsFullName' or hdr == 'SignFullName' or hdr == 'AgtFullName' or hdr == 'CustFullName' or hdr == 'CandFullName':
+            continue
+        data = rowdata[hdr]
+        if data == None or data == '':
+            data = 'NULL'
+        elif data == 'nullstring':
+            data = "''"
+        sql += data + ', '
+
+    # Add file header data values
+    sql += str(filehdr['Ver']) + ', '
+    sql += clean_sql_text(filehdr['SftNm'], '', "'") + ', '
+    sql += clean_sql_text(filehdr['SftVer'], '', "'") + ', '
+    sql += clean_sql_text(filehdr['RptID'], '', "'") + ', '
+    sql += clean_sql_text(filehdr['RptNbr'], '', "'") + ', '
+    sql += clean_sql_text(filehdr['HdrCmnt'], '', "'")
+
+    # Replace empty strings with NULL
+    while sql.find(', ,') != -1:
+        sql = sql.replace(', ,', ', NULL,')
+    if sql.endswith(', '):
+        sql += 'NULL'
+
+    # Create SQL Server connection
+    conn = pyodbc.connect(DBCONNSTR)
+    cursor = conn.cursor()
+
+    # Excecute stored procedure
+    cursor.execute(sql)
+    sqlresult = cursor.fetchone()[0]
+    conn.commit()
+    conn.close()
+
+    # Display error messages
+    if sqlresult == -1:
+        add_entry_to_error_log(errfile, str(imageid) + '.fec already ' \
+                                                       'exists in the FEC database. Data ' \
+                                                       'from this file will not be imported, ' \
+                                                       'and the file has been moved to the ' \
+                                                       'Review directory.')
+    elif sqlresult == -2:
+        add_entry_to_error_log(errfile, 'The stored procedure ' \
+                                        'returned an error when this Python ' \
+                                        'script attempted to load the header ' \
+                                        'for ' + str(imageid) + '. The data ' \
+                                                                'was not loaded into the database, ' \
+                                                                'and the file has been moved to the ' \
+                                                                'Review directory. The stored ' \
+                                                                'procedure call which failed was: ' + sql
+                               )
+    return sqlresult
 
 def parse_data_row(data, delim):
     # There are many cases where a field begins with " but is cut off or
