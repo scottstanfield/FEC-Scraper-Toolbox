@@ -15,6 +15,12 @@ import shutil
 import time
 import pyodbc
 import schemas
+import sys
+
+
+# Print errors to stderr
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 """
   Currently supported forms and versions:
