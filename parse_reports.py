@@ -13,7 +13,7 @@ import os
 import shutil
 import time
 import pyodbc
-import schemas
+from schemas import *
 import sys
 
 
@@ -51,23 +51,16 @@ def eprint(*args, **kwargs):
 
 # Try to import user settings or set them explicitly.
 try:
-    import usersettings
-
-    DBCONNSTR = usersettings.DBCONNSTR
-    RPTERRDIR = usersettings.RPTERRDIR
-    RPTHOLDDIR = usersettings.RPTHOLDDIR
-    RPTOUTDIR = usersettings.RPTOUTDIR
-    RPTPROCDIR = usersettings.RPTPROCDIR
-    RPTRVWDIR = usersettings.RPTRVWDIR
-    RPTSVDIR = usersettings.RPTSVDIR
+    from usersettings import *
+    from dsn import *
 except:
-    DBCONNSTR = ''
-    RPTERRDIR = 'C:\\data\\FEC\\Reports\\ErrorLogs\\'
+    DBCONNSTR  = ''
+    RPTERRDIR  = 'C:\\data\\FEC\\Reports\\ErrorLogs\\'
     RPTHOLDDIR = 'C:\\data\\FEC\\Reports\\Hold\\'
-    RPTOUTDIR = 'C:\\data\\FEC\\Reports\\Output\\'
+    RPTOUTDIR  = 'C:\\data\\FEC\\Reports\\Output\\'
     RPTPROCDIR = 'C:\\data\\FEC\\Reports\\Processed\\'
-    RPTRVWDIR = 'C:\\data\\FEC\\Reports\\Review\\'
-    RPTSVDIR = 'C:\\data\\FEC\\Reports\\Import\\'
+    RPTRVWDIR  = 'C:\\data\\FEC\\Reports\\Review\\'
+    RPTSVDIR   = 'C:\\data\\FEC\\Reports\\Import\\'
 
 # Other user variables
 # --------------------
@@ -90,8 +83,8 @@ OUTPUTDELIMITER = '\t'
 filectr = 0
 
 # Map the filehdrs global to our global namespace from schemas.py
-filehdrs = schemas.filehdrs
-outputhdrs = schemas.outputhdrs
+# filehdrs = schemas.filehdrs
+# outputhdrs = schemas.outputhdrs
 
 def add_entry_to_error_log(logfile, logtext):
     with open(logfile, 'a') as output:
@@ -4275,6 +4268,9 @@ def check_row_data_text(data, image, rownbr, namedelim='', dateformat='CCYYMMDD'
 ##############################################
 
 def main():
+  global BADREPORTS, FILELIMIT, SRCDELIMITER, OUTPUTDELIMITER, filectr
+
+  print('Using "%s" as DSN\n' % DBCONNSTR)
 
   # Built list of supported report types
   rpttypes = build_list_of_supported_report_types()
@@ -4284,24 +4280,24 @@ def main():
 
   # Build files to house data output
   otherdatafile = RPTOUTDIR + 'OtherData_' + filestamp + '.txt'
-  schedafile = RPTOUTDIR + 'SchedA_' + filestamp + '.txt'
-  schedbfile = RPTOUTDIR + 'SchedB_' + filestamp + '.txt'
-  schedcfile = RPTOUTDIR + 'SchedC_' + filestamp + '.txt'
-  schedc1file = RPTOUTDIR + 'SchedC1_' + filestamp + '.txt'
-  schedc2file = RPTOUTDIR + 'SchedC2_' + filestamp + '.txt'
-  scheddfile = RPTOUTDIR + 'SchedD_' + filestamp + '.txt'
-  schedefile = RPTOUTDIR + 'SchedE_' + filestamp + '.txt'
-  schedffile = RPTOUTDIR + 'SchedF_' + filestamp + '.txt'
-  schedh1file = RPTOUTDIR + 'SchedH1_' + filestamp + '.txt'
-  schedh2file = RPTOUTDIR + 'SchedH2_' + filestamp + '.txt'
-  schedh3file = RPTOUTDIR + 'SchedH3_' + filestamp + '.txt'
-  schedh4file = RPTOUTDIR + 'SchedH4_' + filestamp + '.txt'
-  schedh5file = RPTOUTDIR + 'SchedH5_' + filestamp + '.txt'
-  schedh6file = RPTOUTDIR + 'SchedH6_' + filestamp + '.txt'
-  schedifile = RPTOUTDIR + 'SchedI_' + filestamp + '.txt'
-  schedlfile = RPTOUTDIR + 'SchedL_' + filestamp + '.txt'
-  textfile = RPTOUTDIR + 'Text_' + filestamp + '.txt'
-  f1sfile = RPTOUTDIR + 'F1S_' + filestamp + '.txt'
+  schedafile    = RPTOUTDIR + 'SchedA_' + filestamp + '.txt'
+  schedbfile    = RPTOUTDIR + 'SchedB_' + filestamp + '.txt'
+  schedcfile    = RPTOUTDIR + 'SchedC_' + filestamp + '.txt'
+  schedc1file   = RPTOUTDIR + 'SchedC1_' + filestamp + '.txt'
+  schedc2file   = RPTOUTDIR + 'SchedC2_' + filestamp + '.txt'
+  scheddfile    = RPTOUTDIR + 'SchedD_' + filestamp + '.txt'
+  schedefile    = RPTOUTDIR + 'SchedE_' + filestamp + '.txt'
+  schedffile    = RPTOUTDIR + 'SchedF_' + filestamp + '.txt'
+  schedh1file   = RPTOUTDIR + 'SchedH1_' + filestamp + '.txt'
+  schedh2file   = RPTOUTDIR + 'SchedH2_' + filestamp + '.txt'
+  schedh3file   = RPTOUTDIR + 'SchedH3_' + filestamp + '.txt'
+  schedh4file   = RPTOUTDIR + 'SchedH4_' + filestamp + '.txt'
+  schedh5file   = RPTOUTDIR + 'SchedH5_' + filestamp + '.txt'
+  schedh6file   = RPTOUTDIR + 'SchedH6_' + filestamp + '.txt'
+  schedifile    = RPTOUTDIR + 'SchedI_' + filestamp + '.txt'
+  schedlfile    = RPTOUTDIR + 'SchedL_' + filestamp + '.txt'
+  textfile      = RPTOUTDIR + 'Text_' + filestamp + '.txt'
+  f1sfile       = RPTOUTDIR + 'F1S_' + filestamp + '.txt'
 
   # Write headers to data output files
   with open(schedafile, 'w') as outputfile:
@@ -4402,6 +4398,9 @@ def main():
       if filectr > FILELIMIT:
           break
 
+      # Our meger status...
+      print('%6d:%s' % (filectr, fecfile))
+
       # Store ImageID in variable
       imageid = int(fecfile.replace(RPTSVDIR, '').replace('.fec', ''))
 
@@ -4453,7 +4452,7 @@ def main():
       # If report type not supported, move file to Hold directory
       # and proceed to next file; otherwise retrieve header version
       if rpttype not in rpttypes:
-          print('skip: %s %s\n' % (fecfile, rpttype))
+          print('skip: %s %s' % (fecfile, rpttype))
           os.rename(fecfile, fecfile.replace(RPTSVDIR, RPTHOLDDIR))
           continue
       else:
@@ -4555,685 +4554,6 @@ def main():
       if 'ElecCd' in rpthdrdata:
           if rpthdrdata['ElecCd'] == None or rpthdrdata['ElecCd'] == '':
               rpthdrdata['ElecCd'] = 'NA'
-
-      # Call function to verify data is valid, then load into database
-      sqlresult = 0
-      if rpttype == 'F3':
-          rpthdrdata = check_rpt_hdrs_f3(imageid, rpthdrdata, filehdrdata['NmDelim'], filehdrdata['DtFmt'])
-          sqlresult = load_rpt_hdrs(rpttype, imageid, rpthdrdata, filehdrdata, outputhdrs[rpttype], DBCONNSTR)
-      elif rpttype == 'F3L':
-          rpthdrdata = check_rpt_hdrs_f3l(imageid, rpthdrdata, filehdrdata['NmDelim'], filehdrdata['DtFmt'])
-          sqlresult = load_rpt_hdrs(rpttype, imageid, rpthdrdata, filehdrdata, outputhdrs[rpttype], DBCONNSTR)
-      elif rpttype == 'F3P':
-          rpthdrdata = check_rpt_hdrs_f3p(imageid, rpthdrdata, filehdrdata['NmDelim'], filehdrdata['DtFmt'])
-          sqlresult = load_rpt_hdrs(rpttype, imageid, rpthdrdata, filehdrdata, outputhdrs[rpttype], DBCONNSTR)
-      elif rpttype == 'F3X':
-          rpthdrdata = check_rpt_hdrs_f3x(imageid, rpthdrdata, filehdrdata['NmDelim'], filehdrdata['DtFmt'])
-          sqlresult = load_rpt_hdrs(rpttype, imageid, rpthdrdata, filehdrdata, outputhdrs[rpttype], DBCONNSTR)
-      elif rpttype == 'F1':
-          rpthdrdata = check_rpt_hdrs_f1(imageid, rpthdrdata, filehdrdata['NmDelim'], filehdrdata['DtFmt'])
-          sqlresult = load_rpt_hdrs(rpttype, imageid, rpthdrdata, filehdrdata, outputhdrs[rpttype], DBCONNSTR)
-
-      # On error, move file to Review directory
-      if sqlresult == -1:
-          shutil.move(fecfile, fecfile.replace(RPTSVDIR, RPTRVWDIR))
-          continue
-      elif sqlresult == -2:
-          shutil.move(fecfile, fecfile.replace(RPTSVDIR, RPTRVWDIR))
-          continue
-
-      # ITERATE OVER DATA ROWS
-      # ----------------------
-      # Because some headers are multiple lines, create a flag to look for
-      # the report header and ignore all rows before finding a line that
-      # begins with the report type.
-      with open(fecfile, 'r', encoding='ascii') as datafile:
-          # Create header flag and lists to house output data
-          hdrflg = 0
-          otherdata = []
-          scheda = []
-          schedb = []
-          schedc = []
-          schedc1 = []
-          schedc2 = []
-          schedd = []
-          schede = []
-          schedf = []
-          schedh1 = []
-          schedh2 = []
-          schedh3 = []
-          schedh4 = []
-          schedh5 = []
-          schedh6 = []
-          schedi = []
-          schedl = []
-          text = []
-          f1s = []
-
-          # Iterate through the file
-          linenbr = 0
-          for line in datafile:
-              linenbr += 1
-              # Skip blank lines
-              if line.strip() == '':
-                  continue
-
-              # Create list to house this line's data
-              data = []
-
-              # Do some basic whitespace cleanup
-              # If OUTPUTDELIMITER is tab, change all tabs and newlines to spaces
-              if OUTPUTDELIMITER == '\t':
-                  line = line.expandtabs(1).replace('\r', ' ').strip()
-
-              # Remove all instances of two spaces
-              while '  ' in line:
-                  line = line.replace('  ', ' ')
-
-              # Convert line to list
-              data = parse_data_row(line, SRCDELIMITER)
-
-              # If hdrflag == 0, see if this is header line; if not, continue
-              if hdrflg == 0:
-                  if data[0] == rpthdrdata['FormTp'].strip(" '"):
-                      hdrflg = 1
-                  continue
-
-              # This is a data row. Determine row's form type.
-              # Additional coding is necessary for Text, the three types
-              # of Schedule C forms and the six types of Schedule H forms.
-              formtype = ''
-              if data[0].startswith('SC1'):
-                  formtype = 'SC1'
-              elif data[0].startswith('SC2'):
-                  formtype = 'SC2'
-              elif data[0].startswith('SC'):
-                  formtype = 'SC'
-              elif data[0].startswith('H1'):
-                  formtype = 'H1'
-              elif data[0].startswith('H2'):
-                  formtype = 'H2'
-              elif data[0].startswith('H3'):
-                  formtype = 'H3'
-              elif data[0].startswith('H4'):
-                  formtype = 'H4'
-              elif data[0].startswith('H5'):
-                  formtype = 'H5'
-              elif data[0].startswith('H6'):
-                  formtype = 'H6'
-              elif data[0].lower() == 'text':  # Sometimes not ALLCAPS
-                  formtype = 'TEXT'
-              elif data[0].startswith('F1S'):
-                  formtype = 'F1S'
-              else:
-                  for key in list(outputhdrs.keys()):
-                      if data[0].startswith(key):
-                          formtype = key
-                          continue
-
-              # Write the row to the other data file if row's form type not found
-              # and skip to next line
-              if formtype == '':
-                  otherdata.append(str(imageid) + OUTPUTDELIMITER + str(hdrver) + OUTPUTDELIMITER + 'line: ' + str(
-                      linenbr) + OUTPUTDELIMITER + line + '\r')
-                  continue
-
-              # Make local copy of output headers
-              linehdrs = outputhdrs[formtype][:]
-
-              # Build output dictionary to house data
-              linedata = {}
-              for hdr in linehdrs:
-                  linedata[hdr] = ''
-
-              # Get headers for data row
-              rowhdrs = get_row_headers(formtype, hdrver)
-
-              # Write the row to the other data file if no headers found
-              if rowhdrs == []:
-                  otherdata.append(str(imageid) + OUTPUTDELIMITER + str(hdrver) + OUTPUTDELIMITER + 'line: ' + str(
-                      linenbr) + OUTPUTDELIMITER + line + '\r')
-                  continue
-
-              # Populate data row dictionary
-              linedata = populate_data_row_dict(data, rowhdrs, linedata)
-
-              # Call function to verify data is valid before loading into database
-              if formtype == 'SA':
-                  # Validate data
-                  linedata = check_row_data_sch_a(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('ContFullName')
-                  linehdrs.remove('DonorCandFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  scheda.append(data)
-              elif formtype == 'SB':
-                  # Validate data
-                  linedata = check_row_data_sch_b(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('PayeeFullName')
-                  linehdrs.remove('BenCandFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedb.append(data)
-              elif formtype == 'SC':
-                  # Validate data
-                  linedata = check_row_data_sch_c(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('LenderFullName')
-                  linehdrs.remove('LenderCandFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedc.append(data)
-              elif formtype == 'SC1':
-                  # Validate data
-                  linedata = check_row_data_sch_c1(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('LendRepFullName')
-                  linehdrs.remove('TrsFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedc1.append(data)
-              elif formtype == 'SC2':
-                  linedata = check_row_data_sch_c2(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('GuarFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedc2.append(data)
-              elif formtype == 'SD':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_sch_d(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedd.append(data)
-              elif formtype == 'SE':
-                  # Validate data
-                  linedata = check_row_data_sch_e(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('PayeeFullName')
-                  linehdrs.remove('SupOppCandFullName')
-                  linehdrs.remove('CompFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schede.append(data)
-              elif formtype == 'SF':
-                  # Validate data
-                  linedata = check_row_data_sch_f(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('PayeeFullName')
-                  linehdrs.remove('PayeeCandFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedf.append(data)
-              elif formtype == 'H1':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_sch_h1(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedh1.append(data)
-              elif formtype == 'H2':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_sch_h2(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedh2.append(data)
-              elif formtype == 'H3':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_sch_h3(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedh3.append(data)
-              elif formtype == 'H4':
-                  # Validate data
-                  linedata = check_row_data_sch_h4(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('PayeeFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedh4.append(data)
-              elif formtype == 'H5':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_sch_h5(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedh5.append(data)
-              elif formtype == 'H6':
-                  # Validate data
-                  linedata = check_row_data_sch_h6(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('PayeeFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedh6.append(data)
-              elif formtype == 'SI':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_sch_i(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedi.append(data)
-              elif formtype == 'SL':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_sch_l(linedata, imageid, linenbr, filehdrdata['NmDelim'],
-                                                  filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  schedl.append(data)
-              elif formtype == 'TEXT':
-                  # No full name fields in data dictionary
-                  # Validate data
-                  linedata = check_row_data_text(linedata, imageid, linenbr, filehdrdata['NmDelim'], filehdrdata['DtFmt'])
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, fullrpttype)
-                  text.append(data)
-              elif formtype == 'F1S':
-                  # Validate data
-                  linedata = check_row_data_f1s(linedata, imageid, linenbr, filehdrdata['NmDelim'], filehdrdata['DtFmt'])
-                  # Remove full name fields
-                  linehdrs.remove('AgtFullName')
-                  # Create list for the data row
-                  data = build_data_row(linedata, linehdrs, imageid, None)
-                  f1s.append(data)
-
-          # Write data to files
-          if len(otherdata) > 0:
-              with open(otherdatafile, 'a') as outputfile:
-                  for row in otherdata:
-                      outputfile.write(row)
-
-          if len(scheda) > 0:
-              with open(schedafile, 'a') as outputfile:
-                  for row in scheda:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedb) > 0:
-              with open(schedbfile, 'a') as outputfile:
-                  for row in schedb:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedc) > 0:
-              with open(schedcfile, 'a') as outputfile:
-                  for row in schedc:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedc1) > 0:
-              with open(schedc1file, 'a') as outputfile:
-                  for row in schedc1:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedc2) > 0:
-              with open(schedc2file, 'a') as outputfile:
-                  for row in schedc2:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedd) > 0:
-              with open(scheddfile, 'a') as outputfile:
-                  for row in schedd:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schede) > 0:
-              with open(schedefile, 'a') as outputfile:
-                  for row in schede:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedf) > 0:
-              with open(schedffile, 'a') as outputfile:
-                  for row in schedf:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedh1) > 0:
-              with open(schedh1file, 'a') as outputfile:
-                  for row in schedh1:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedh2) > 0:
-              with open(schedh2file, 'a') as outputfile:
-                  for row in schedh2:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedh3) > 0:
-              with open(schedh3file, 'a') as outputfile:
-                  for row in schedh3:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedh4) > 0:
-              with open(schedh4file, 'a') as outputfile:
-                  for row in schedh4:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedh5) > 0:
-              with open(schedh5file, 'a') as outputfile:
-                  for row in schedh5:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedh6) > 0:
-              with open(schedh6file, 'a') as outputfile:
-                  for row in schedh6:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedi) > 0:
-              with open(schedifile, 'a') as outputfile:
-                  for row in schedi:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(schedl) > 0:
-              with open(schedlfile, 'a') as outputfile:
-                  for row in schedl:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(text) > 0:
-              with open(textfile, 'a') as outputfile:
-                  for row in text:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-          if len(f1s) > 0:
-              with open(f1sfile, 'a') as outputfile:
-                  for row in f1s:
-                      outputfile.write(OUTPUTDELIMITER.join(map(str, row)) + '\r')
-
-      # Move the file to the processed directory
-      shutil.move(fecfile, fecfile.replace(RPTSVDIR, RPTPROCDIR))
-      continue
-
-  # Run stored procedure to deactivate overlapping reports
-  # not covered by database triggers
-  try:
-      sql = 'EXEC dbo.usp_DeactivateOverlappingReports'
-
-      # Create SQL Server connection
-      conn = pyodbc.connect(DBCONNSTR)
-      cursor = conn.cursor()
-
-      # Excecute stored procedure
-      cursor.execute(sql)
-      conn.commit()
-      conn.close()
-  except:
-      pass
-
-if __name__ == "__main__":
-  main()
-
-  # Built list of supported report types
-  rpttypes = build_list_of_supported_report_types()
-
-  # Create timestamp to append to output files
-  filestamp = create_file_timestamp()
-
-  # Build files to house data output
-  otherdatafile = RPTOUTDIR + 'OtherData_' + filestamp + '.txt'
-  schedafile = RPTOUTDIR + 'SchedA_' + filestamp + '.txt'
-  schedbfile = RPTOUTDIR + 'SchedB_' + filestamp + '.txt'
-  schedcfile = RPTOUTDIR + 'SchedC_' + filestamp + '.txt'
-  schedc1file = RPTOUTDIR + 'SchedC1_' + filestamp + '.txt'
-  schedc2file = RPTOUTDIR + 'SchedC2_' + filestamp + '.txt'
-  scheddfile = RPTOUTDIR + 'SchedD_' + filestamp + '.txt'
-  schedefile = RPTOUTDIR + 'SchedE_' + filestamp + '.txt'
-  schedffile = RPTOUTDIR + 'SchedF_' + filestamp + '.txt'
-  schedh1file = RPTOUTDIR + 'SchedH1_' + filestamp + '.txt'
-  schedh2file = RPTOUTDIR + 'SchedH2_' + filestamp + '.txt'
-  schedh3file = RPTOUTDIR + 'SchedH3_' + filestamp + '.txt'
-  schedh4file = RPTOUTDIR + 'SchedH4_' + filestamp + '.txt'
-  schedh5file = RPTOUTDIR + 'SchedH5_' + filestamp + '.txt'
-  schedh6file = RPTOUTDIR + 'SchedH6_' + filestamp + '.txt'
-  schedifile = RPTOUTDIR + 'SchedI_' + filestamp + '.txt'
-  schedlfile = RPTOUTDIR + 'SchedL_' + filestamp + '.txt'
-  textfile = RPTOUTDIR + 'Text_' + filestamp + '.txt'
-  f1sfile = RPTOUTDIR + 'F1S_' + filestamp + '.txt'
-
-  # Write headers to data output files
-  with open(schedafile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SA'])) + '\r')
-
-  with open(schedbfile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SB'])) + '\r')
-
-  with open(schedcfile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SC'])) + '\r')
-
-  with open(schedc1file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SC1'])) + '\r')
-
-  with open(schedc2file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SC2'])) + '\r')
-
-  with open(scheddfile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SD'])) + '\r')
-
-  with open(schedefile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SE'])) + '\r')
-
-  with open(schedffile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SF'])) + '\r')
-
-  with open(schedh1file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['H1'])) + '\r')
-
-  with open(schedh2file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['H2'])) + '\r')
-
-  with open(schedh3file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['H3'])) + '\r')
-
-  with open(schedh4file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['H4'])) + '\r')
-
-  with open(schedh5file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['H5'])) + '\r')
-
-  with open(schedh6file, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['H6'])) + '\r')
-
-  with open(schedifile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SI'])) + '\r')
-
-  with open(schedlfile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['SL'])) + '\r')
-
-  with open(textfile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + 'PrtTp' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(
-          map(str, outputhdrs['TEXT'])) + '\r')
-
-  with open(f1sfile, 'w') as outputfile:
-      outputfile.write('ImageID' + OUTPUTDELIMITER + OUTPUTDELIMITER.join(map(str, outputhdrs['F1S'])) + '\r')
-
-  # Append full name fields to output headers
-  outputhdrs['SA'].append('ContFullName')
-  outputhdrs['SA'].append('DonorCandFullName')
-  outputhdrs['SB'].append('PayeeFullName')
-  outputhdrs['SB'].append('BenCandFullName')
-  outputhdrs['SC'].append('LenderFullName')
-  outputhdrs['SC'].append('LenderCandFullName')
-  outputhdrs['SC1'].append('LendRepFullName')
-  outputhdrs['SC1'].append('TrsFullName')
-  outputhdrs['SC2'].append('GuarFullName')
-  outputhdrs['SE'].append('PayeeFullName')
-  outputhdrs['SE'].append('SupOppCandFullName')
-  outputhdrs['SE'].append('CompFullName')
-  outputhdrs['SF'].append('PayeeFullName')
-  outputhdrs['SF'].append('PayeeCandFullName')
-  outputhdrs['H4'].append('PayeeFullName')
-  outputhdrs['H6'].append('PayeeFullName')
-  outputhdrs['F1S'].append('AgtFullName')
-
-  # Iterate through each file
-  for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
-
-      # Iterate counter and break at desired file count
-      filectr += 1
-      if filectr > FILELIMIT:
-          break
-
-      # Store ImageID in variable
-      imageid = int(fecfile.replace(RPTSVDIR, '').replace('.fec', ''))
-
-      # Move file to hold directory if it's a known bad file
-      if imageid in BADREPORTS:
-          os.rename(fecfile, fecfile.replace(RPTSVDIR, RPTHOLDDIR))
-          continue
-
-      # Extract file header
-      filehdr = linecache.getline(fecfile, 1)
-
-      # Headers in versions 1 and 2 are multiple lines
-      # If first line contains /* Header, it's an old style header
-      x = 2
-      if filehdr.lower().find('/* header') != -1:
-          filehdr = filehdr.replace('/* Header', '').replace('/* header', '').replace('/* HEADER', '').strip()
-          flg = 0
-          while flg == 0:
-              y = linecache.getline(fecfile, x)
-              if y.lower().find('/* end header') == -1:
-                  filehdr = filehdr + '\n' + y.strip()
-              else:
-                  flg = 1
-              x += 1
-
-      # Extract report header
-      rpthdr = linecache.getline(fecfile, x)
-
-      # Clear linecache
-      linecache.clearcache()
-
-      # Change file delimiter to commas if ASCII-28 not found in report header
-      if not SRCDELIMITER in rpthdr:
-          SRCDELIMITER = ','
-
-      # Extract report type from report header
-      fullrpttype = rpthdr[:rpthdr.find(SRCDELIMITER)].lstrip(' "').rstrip(' "')
-      rpttype = fullrpttype.rstrip('ANT')
-
-      # If report type not supported, move file to Hold directory
-      # and proceed to next file; otherwise retrieve header version
-      if rpttype not in rpttypes:
-          os.rename(fecfile, fecfile.replace(RPTSVDIR, RPTHOLDDIR))
-          continue
-      else:
-          hdrver = ''
-          if filehdr.lower().find('fec_ver_#') != -1:  # FEC_VER_#, FEC_Ver_#
-              hdrver = filehdr[filehdr.lower().find('fec_ver_#') + 9:].lstrip(' =')
-              hdrver = float(hdrver[:hdrver.find('\n')].strip(' "'))
-          else:
-              hdrver = float(filehdr.split(SRCDELIMITER)[2].strip(' "'))
-
-      # Now that we know the form type and header version, we are going
-      # to build the header data row to insert into the database.
-
-      # First, fetch file headers. Custom code needed for versions 1 and 2.
-      filehdrdata = {'ImageID': imageid,
-                    'RecType': 'HDR',
-                    'EFType': 'FEC',
-                    'Ver': hdrver,
-                    'SftNm': '',
-                    'SftVer': '',
-                    'RptID': '',
-                    'RptNbr': '0',
-                    'HdrCmnt': '',
-                    'NmDelim': '',
-                    'DecNoDec': 'DEC',
-                    'DtFmt': 'CCYYMMDD'}
-
-      if hdrver < 3.0:
-          # Custom code for multiline headers (versions 1 and 2)
-          # Set default name delimiter to ^
-          filehdrdata['NmDelim'] = '^'
-          filehdr = filehdr.split('\n')
-          for hdr in filehdr:
-              line = hdr.strip()
-              if line.lower().startswith('soft_name'):
-                  filehdrdata['SftNm'] = line[line.find('=') + 1:].strip(' "')
-              elif line.lower().startswith('soft_ver'):
-                  filehdrdata['SftVer'] = line[line.find('=') + 1:].strip(' "')
-              elif line.lower().startswith('control'):
-                  filehdrdata['RptID'] = line[line.find('=') + 1:].strip(' "')
-              elif line.lower().startswith('namedelim'):
-                  filehdrdata['NmDelim'] = line[line.find('=') + 1:].strip(' "')
-              elif line.lower().startswith('dec/nodec'):
-                  filehdrdata['DecNoDec'] = line[line.find('=') + 1:].strip(' "')
-              elif line.lower().startswith('date_fmat'):
-                  filehdrdata['DtFmt'] = line[line.find('=') + 1:].strip(' "')
-              elif line.lower().find('comment') != -1:
-                  filehdrdata['HdrCmnt'] = line[line.find('=') + 1:].strip(' "')
-
-      else:
-          rowhdrs = get_row_headers('Hdr', hdrver)
-
-          # Parse file header row
-          filehdr = parse_data_row(filehdr, SRCDELIMITER)
-
-          # Iterate through file header row and populate header dictionary
-          for x in range(len(rowhdrs)):
-              if rowhdrs[x] in list(filehdrdata.keys()) and x < len(
-                      filehdr):  # Checking len because sometimes header comment omitted
-                  filehdrdata[rowhdrs[x]] = filehdr[x].strip().replace(OUTPUTDELIMITER, ' ').strip(' "\n')
-
-      # First, change hdrver to int when < 4
-      if hdrver < 4:
-          hdrver = int(hdrver)
-
-      # Get output headers
-      rpthdrdata = {}
-      for hdr in outputhdrs[rpttype]:
-          rpthdrdata[hdr] = ''
-
-      # Get headers for report header row
-      rowhdrs = get_row_headers(rpttype, hdrver)
-
-      # Parse report header row
-      rpthdr = parse_data_row(rpthdr, SRCDELIMITER)
-
-      # Iterate through report header row and populate report header dictionary
-      for x in range(len(rowhdrs)):
-          if rowhdrs[x] in list(rpthdrdata.keys()) and x < len(
-                  rpthdr):  # 100235 (F3X, v5.0) missing last 12 cols after treas sign date
-              rpthdrdata[rowhdrs[x]] = rpthdr[x].strip().replace(OUTPUTDELIMITER, ' ').strip(' "\n')
-
-      # Attempt to determine name delimiter if missing
-      if filehdrdata['NmDelim'] == '':
-          if 'TrsFullName' in list(rpthdrdata.keys()):
-              if rpthdrdata['TrsFullName'].find('^') != -1:
-                  filehdrdata['NmDelim'] = '^'
-              elif rpthdrdata['TrsFullName'].find(',') != -1:
-                  filehdrdata['NmDelim'] = ','
 
       # Call function to verify data is valid, then load into database
       sqlresult = 0
