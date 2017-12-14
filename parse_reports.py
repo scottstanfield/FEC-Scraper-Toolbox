@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!python3 -u
 
 # By Christopher Schnaars, USA TODAY
 # Developed with Python 2.7.4
