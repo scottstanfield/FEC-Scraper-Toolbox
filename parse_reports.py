@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 # Parse campaign finance reports
 # By Christopher Schnaars, USA TODAY
