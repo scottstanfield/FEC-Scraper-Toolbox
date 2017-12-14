@@ -4412,7 +4412,13 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
         continue
 
     # Extract file header
-    filehdr = linecache.getline(fecfile, 1)
+    try:
+        filehdr = linecache.getline(fecfile, 1)
+    except Exception as ex:
+        eprint(ex)
+        eprint('Skipping: %s\n' % (fecfile))
+        os.rename(fecfile, fecfile.replace(RPTSVDIR, RPTHOLDDIR))
+        continue
 
     # Headers in versions 1 and 2 are multiple lines
     # If first line contains /* Header, it's an old style header
