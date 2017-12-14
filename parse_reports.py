@@ -4532,6 +4532,18 @@ for fecfile in glob.glob(os.path.join(RPTSVDIR, '*.fec')):
             elif rpthdrdata['TrsFullName'].find(',') != -1:
                 filehdrdata['NmDelim'] = ','
 
+
+    ##
+    ## Because quarterly reports are not within 12 days of an election
+    ## this field is allowed to be NULL. But currently NULL is not allowed
+    ## by the database schema. So we're setting it to NA for now.
+    ##
+    ## TODO: modify DB schema to allow ElecCd to be NULL instead
+    ##
+    if 'ElecCd' in rpthdrdata:
+        if rpthdrdata['ElecCd'] == None or rpthdrdata['ElecCd'] == '':
+            rpthdrdata['ElecCd'] = 'NA'
+
     # Call function to verify data is valid, then load into database
     sqlresult = 0
     if rpttype == 'F3':
